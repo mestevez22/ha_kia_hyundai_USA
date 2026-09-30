@@ -429,3 +429,13 @@ def get_entry_coordinators(hass: HomeAssistant, config_entry: ConfigEntry) -> di
 def get_coordinator(hass: HomeAssistant, vehicle_id: str) -> VehicleCoordinator | None:
     """Get coordinator for a specific vehicle."""
     return get_all_coordinators(hass).get(vehicle_id)
+
+async def async_remove_config_entry_device(
+    hass: HomeAssistant, config_entry: ConfigEntry, device_entry
+) -> bool:
+    """Allow removing a device from an account if that account doesn't own the vehicle."""
+    entry_coordinators = get_entry_coordinators(hass, config_entry)
+    for domain, identifier in device_entry.identifiers:
+        if domain == DOMAIN and identifier in entry_coordinators:
+            return False
+    return True
