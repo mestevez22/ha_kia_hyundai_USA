@@ -6,7 +6,7 @@ from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 
-from . import get_all_coordinators
+from . import get_entry_coordinators
 from .vehicle_coordinator import VehicleCoordinator
 from .vehicle_coordinator_base_entity import VehicleCoordinatorBaseEntity
 
@@ -17,7 +17,7 @@ PARALLEL_UPDATES: int = 1
 async def async_setup_entry(
     hass: HomeAssistant, config_entry: ConfigEntry, async_add_entities: AddEntitiesCallback
 ):
-    coordinators = get_all_coordinators(hass)
+    coordinators = get_entry_coordinators(hass, config_entry)
 
     entities = []
     for coordinator in coordinators.values():

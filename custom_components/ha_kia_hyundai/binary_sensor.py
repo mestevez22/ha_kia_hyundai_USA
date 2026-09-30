@@ -11,7 +11,7 @@ from homeassistant.components.binary_sensor import BinarySensorEntity, BinarySen
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.restore_state import RestoreEntity
 
-from . import VehicleCoordinator, get_all_coordinators
+from . import VehicleCoordinator, get_entry_coordinators
 from .vehicle_coordinator_base_entity import VehicleCoordinatorBaseEntity
 
 if TYPE_CHECKING:
@@ -150,7 +150,7 @@ BINARY_SENSOR_DESCRIPTIONS: Final[tuple[KiaBinarySensorEntityDescription, ...]] 
 async def async_setup_entry(
     hass: HomeAssistant, config_entry: ConfigEntry, async_add_entities: AddEntitiesCallback
 ):
-    coordinators = get_all_coordinators(hass)
+    coordinators = get_entry_coordinators(hass, config_entry)
 
     binary_sensors = []
     for coordinator in coordinators.values():

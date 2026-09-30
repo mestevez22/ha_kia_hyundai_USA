@@ -12,7 +12,7 @@ from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.restore_state import RestoreEntity
 
-from . import VehicleCoordinator, get_all_coordinators
+from . import VehicleCoordinator, get_entry_coordinators
 from .vehicle_coordinator_base_entity import VehicleCoordinatorBaseEntity
 
 _LOGGER = getLogger(__name__)
@@ -49,7 +49,7 @@ async def async_setup_entry(
     config_entry: ConfigEntry,
     async_add_entities: AddEntitiesCallback,
 ) -> None:
-    coordinators = get_all_coordinators(hass)
+    coordinators = get_entry_coordinators(hass, config_entry)
 
     entities = []
     for coordinator in coordinators.values():

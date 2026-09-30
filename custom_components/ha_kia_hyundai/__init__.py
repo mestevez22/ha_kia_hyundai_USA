@@ -364,8 +364,8 @@ async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry):
         if not coordinators:
             raise ConfigEntryError("No vehicles could be set up")
 
-        # Store coordinators
-        hass.data[DOMAIN][COORDINATORS_KEY] = coordinators
+        # Store coordinators PER CONFIG ENTRY (fix: multiple accounts overwrote each other)
+        hass.data[DOMAIN].setdefault(COORDINATORS_KEY, {})[config_entry.entry_id] = coordinators
 
         # Set up platforms
         await hass.config_entries.async_forward_entry_setups(config_entry, PLATFORMS)
@@ -391,15 +391,20 @@ async def async_unload_entry(hass: HomeAssistant, config_entry: ConfigEntry) -> 
     unload_ok = await hass.config_entries.async_unload_platforms(config_entry, PLATFORMS)
 
     if unload_ok:
-        # Clean up coordinators
-        hass.data[DOMAIN].pop(COORDINATORS_KEY, None)
+        # Clean up only this entry's coordinators
+        entry_map = hass.data[DOMAIN].get(COORDINATORS_KEY, {})
+        entry_map.pop(config_entry.entry_id, None)
 
-        # Clean up shared API connection
-        hass.data[DOMAIN].pop(API_CONNECTION_KEY, None)
-        hass.data[DOMAIN].pop(API_CONNECTION_LOCK_KEY, None)
+        # Clean up only this account's API connection
+        brand = config_entry.data.get(CONF_BRAND, BRAND_KIA)
+        username = config_entry.data.get(CONF_USERNAME)
+        hass.data[DOMAIN].pop(f"{API_CONNECTION_KEY}_{brand}_{username}", None)
+        hass.data[DOMAIN].pop(f"{API_CONNECTION_LOCK_KEY}_{brand}_{username}", None)
 
-        # Unload services
-        async_unload_services(hass)
+        # Only unload services when the last account is removed
+        if not entry_map:
+            hass.data[DOMAIN].pop(COORDINATORS_KEY, None)
+            async_unload_services(hass)
 
         # Clean up domain data if empty
         if not any(k for k in hass.data[DOMAIN] if not k.startswith("_")):
@@ -408,12 +413,19 @@ async def async_unload_entry(hass: HomeAssistant, config_entry: ConfigEntry) -> 
     return unload_ok
 
 
+def get_all_coordinators(hass: HomeAssistant) -> dict[str, VehicleCoordinator]:
+    """Get coordinators for every vehicle across ALL accounts."""
+    merged: dict[str, VehicleCoordinator] = {}
+    for entry_coordinators in hass.data.get(DOMAIN, {}).get(COORDINATORS_KEY, {}).values():
+        merged.update(entry_coordinators)
+    return merged
+
+
+def get_entry_coordinators(hass: HomeAssistant, config_entry: ConfigEntry) -> dict[str, VehicleCoordinator]:
+    """Get coordinators belonging to ONE config entry (account)."""
+    return hass.data.get(DOMAIN, {}).get(COORDINATORS_KEY, {}).get(config_entry.entry_id, {})
+
+
 def get_coordinator(hass: HomeAssistant, vehicle_id: str) -> VehicleCoordinator | None:
     """Get coordinator for a specific vehicle."""
-    coordinators = hass.data.get(DOMAIN, {}).get(COORDINATORS_KEY, {})
-    return coordinators.get(vehicle_id)
-
-
-def get_all_coordinators(hass: HomeAssistant) -> dict[str, VehicleCoordinator]:
-    """Get all coordinators."""
-    return hass.data.get(DOMAIN, {}).get(COORDINATORS_KEY, {})
+    return get_all_coordinators(hass).get(vehicle_id)

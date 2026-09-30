@@ -12,7 +12,7 @@ from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.restore_state import RestoreEntity
 
-from . import VehicleCoordinator, get_all_coordinators
+from . import VehicleCoordinator, get_entry_coordinators
 from .const import SEAT_STATUS, STR_TO_SEAT_SETTING
 from .vehicle_coordinator_base_entity import VehicleCoordinatorBaseEntity
 
@@ -95,7 +95,7 @@ async def async_setup_entry(
     async_add_entities: AddEntitiesCallback,
 ) -> None:
     """Set up the entity."""
-    coordinators = get_all_coordinators(hass)
+    coordinators = get_entry_coordinators(hass, config_entry)
 
     entities = []
     for coordinator in coordinators.values():

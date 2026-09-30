@@ -101,9 +101,11 @@ def async_setup_services(hass: HomeAssistant):
 def _get_coordinator_from_device(
         hass: HomeAssistant, call: ServiceCall
 ) -> VehicleCoordinator:
-    coordinators = hass.data.get(DOMAIN, {}).get(COORDINATORS_KEY, {})
+    coordinators = {}
+    for entry_coordinators in hass.data.get(DOMAIN, {}).get(COORDINATORS_KEY, {}).values():
+        coordinators.update(entry_coordinators)
 
-    # If only one vehicle, use it
+    # If only one vehicle across all accounts, use it
     if len(coordinators) == 1:
         return list(coordinators.values())[0]
 
